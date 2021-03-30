@@ -99,7 +99,8 @@ class _BndBoxState extends State<BndBox> {
     List<Widget> _renderKeypoints() {
       var lists = <Widget>[];
       widget.results.forEach((re) {
-        if (re["score"] > 0.6) {
+        print(re["score"]);
+        if (re["score"] > 0.4) {
           var list = re["keypoints"].values.map<Widget>((k) {
             var _x = k["x"];
             var _y = k["y"];

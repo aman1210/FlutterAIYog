@@ -45,8 +45,7 @@ class _HomePageState extends State<HomePage> {
 
       case posenet:
         res = await Tflite.loadModel(
-            model:
-                "assets/posenet_mobilenet_v1_100_257x257_multi_kpt_stripped.tflite");
+            model: "assets/posenet_mv1_075_float_from_checkpoints.tflite");
         break;
 
       default:
@@ -108,13 +107,12 @@ class _HomePageState extends State<HomePage> {
                   setRecognitions,
                 ),
                 BndBox(
-                  _recognitions == null ? [] : _recognitions,
-                  math.max(_imageHeight, _imageWidth),
-                  math.min(_imageHeight, _imageWidth),
-                  screen.height,
-                  screen.width,
-                  _model,
-                ),
+                    _recognitions == null ? [] : _recognitions,
+                    math.max(_imageHeight, _imageWidth),
+                    math.min(_imageHeight, _imageWidth),
+                    screen.height,
+                    screen.width,
+                    _model),
               ],
             ),
     );
