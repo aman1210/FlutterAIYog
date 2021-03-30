@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:tflite/tflite.dart';
 import 'dart:math' as math;
 
@@ -21,6 +24,8 @@ class Camera extends StatefulWidget {
 class _CameraState extends State<Camera> {
   CameraController controller;
   bool isDetecting = false;
+  File _file;
+  ImagePicker picker = ImagePicker();
 
   @override
   void initState() {
@@ -117,7 +122,7 @@ class _CameraState extends State<Camera> {
   }
 
   captureImage() async {
-    var file = await controller.takePicture();
+    var file = await picker.getImage(source: ImageSource.gallery);
     print(file.path);
     var re = await Tflite.runPoseNetOnImage(path: file.path, numResults: 1);
     print(re);
