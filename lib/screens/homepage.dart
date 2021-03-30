@@ -1,63 +1,122 @@
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:yoga_app/main.dart';
+import 'package:camera/camera.dart';
+import 'package:tflite/tflite.dart';
+import 'dart:math' as math;
+
+import 'cameras.dart';
+import 'bndbox.dart';
+import 'models.dart';
 
 class HomePage extends StatefulWidget {
   final List<CameraDescription> cameras;
+
   HomePage(this.cameras);
+
   @override
-  _HomePageState createState() => _HomePageState();
+  _HomePageState createState() => new _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  CameraController cameraController;
+  List<dynamic> _recognitions;
+  int _imageHeight = 0;
+  int _imageWidth = 0;
+  String _model = "";
+
   @override
   void initState() {
     super.initState();
-    cameraController = CameraController(
-      cameras[1],
-      ResolutionPreset.medium,
-    );
-    cameraController.initialize().then((_) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {});
+  }
+
+  loadModel() async {
+    String res;
+    switch (_model) {
+      case yolo:
+        res = await Tflite.loadModel(
+          model: "assets/yolov2_tiny.tflite",
+          labels: "assets/yolov2_tiny.txt",
+        );
+        break;
+
+      case mobilenet:
+        res = await Tflite.loadModel(
+            model: "assets/mobilenet_v1_1.0_224.tflite",
+            labels: "assets/mobilenet_v1_1.0_224.txt");
+        break;
+
+      case posenet:
+        res = await Tflite.loadModel(
+            model:
+                "assets/posenet_mobilenet_v1_100_257x257_multi_kpt_stripped.tflite");
+        break;
+
+      default:
+        res = await Tflite.loadModel(
+            model: "assets/ssd_mobilenet.tflite",
+            labels: "assets/ssd_mobilenet.txt");
+    }
+    print(res);
+  }
+
+  onSelect(model) {
+    setState(() {
+      _model = model;
+    });
+    loadModel();
+  }
+
+  setRecognitions(recognitions, imageHeight, imageWidth) {
+    setState(() {
+      _recognitions = recognitions;
+      _imageHeight = imageHeight;
+      _imageWidth = imageWidth;
     });
   }
 
   @override
-  void dispose() {
-    cameraController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size.width;
-    print(cameraController.value.aspectRatio);
+    Size screen = MediaQuery.of(context).size;
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        child: Column(
-          children: [
-            Flexible(
-              flex: 1,
-              child: Align(
-                alignment: Alignment.center,
-                child: Image.asset(
-                  'assets/images/trikonasana.jpg',
-                  fit: BoxFit.fitHeight,
-                ),
+      body: _model == ""
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  ElevatedButton(
+                    child: const Text(ssd),
+                    onPressed: () => onSelect(ssd),
+                  ),
+                  ElevatedButton(
+                    child: const Text(yolo),
+                    onPressed: () => onSelect(yolo),
+                  ),
+                  ElevatedButton(
+                    child: const Text(mobilenet),
+                    onPressed: () => onSelect(mobilenet),
+                  ),
+                  ElevatedButton(
+                    child: const Text(posenet),
+                    onPressed: () => onSelect(posenet),
+                  ),
+                ],
               ),
+            )
+          : Stack(
+              children: [
+                Camera(
+                  widget.cameras,
+                  _model,
+                  setRecognitions,
+                ),
+                BndBox(
+                  _recognitions == null ? [] : _recognitions,
+                  math.max(_imageHeight, _imageWidth),
+                  math.min(_imageHeight, _imageWidth),
+                  screen.height,
+                  screen.width,
+                  _model,
+                ),
+              ],
             ),
-            Flexible(
-              flex: 2,
-              child: CameraPreview(cameraController),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
